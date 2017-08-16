@@ -85,6 +85,7 @@
 #include "hw/s390x/storage-keys.h"
 #endif
 
+
 /*
  * Supported types:
  *
@@ -221,6 +222,10 @@ static int mon_refcount;
 
 static mon_cmd_t mon_cmds[];
 static mon_cmd_t info_cmds[];
+#if defined(CONFIG_PROCESSOR_TRACE)
+static mon_cmd_t pt_cmds[];
+#endif
+
 
 QmpCommandList qmp_commands, qmp_cap_negotiation_commands;
 
@@ -2216,6 +2221,13 @@ static mon_cmd_t mon_cmds[] = {
 #include "hmp-commands.h"
     { NULL, NULL, },
 };
+
+#if defined(CONFIG_PROCESSOR_TRACE)
+static mon_cmd_t pt_cmds[] = {
+#include "hmp-commands-pt.h"
+    { NULL, NULL, },
+};
+#endif
 
 /*******************************************************************/
 
