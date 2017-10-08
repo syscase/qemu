@@ -1808,6 +1808,18 @@ ETEXI
         .sub_table  = info_cmds,
     },
 
+#if defined(CONFIG_PROCESSOR_TRACE) && defined(TARGET_X86_64)
+    {
+        .name       = "pt",
+        .args_type  = "item:s?",
+        .params     = "[subcommand]",
+        .help       = "show various option to configure Intel Processor Tracing",
+        .cmd        = hmp_info_help,
+        .sub_table = pt_cmds,
+    },
+#endif
+
+
 STEXI
 @end table
 ETEXI
