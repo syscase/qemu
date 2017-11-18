@@ -36,6 +36,8 @@
 #include "sysemu/cpus.h"
 #include "sysemu/replay.h"
 
+#include "afl-qemu-cpu-inl.h"
+
 /* -icount align implementation. */
 
 typedef struct SyncClocks {
@@ -136,7 +138,7 @@ static void init_delay_params(SyncClocks *sc, const CPUState *cpu)
 #endif /* CONFIG USER ONLY */
 
 /* Execute a TB, and fix up the CPU state afterwards if necessary */
-static inline tcg_target_ulong cpu_tb_exec(CPUState *cpu, TranslationBlock *itb)
+static inline tcg_target_ulong cpu_tb_exec(target_ulong pc, CPUState *cpu, TranslationBlock *itb)
 {
     CPUArchState *env = cpu->env_ptr;
     uintptr_t ret;
@@ -186,7 +188,12 @@ static inline tcg_target_ulong cpu_tb_exec(CPUState *cpu, TranslationBlock *itb)
             assert(cc->set_pc);
             cc->set_pc(cpu, last_tb->pc);
         }
+    } else {
+        /* we executed it, trace it */
+        AFL_QEMU_CPU_SNIPPET2(env, pc);
     }
+    if(afl_wants_cpu_to_stop)
+        cpu->exit_request = 1;
     return ret;
 }
 
@@ -212,7 +219,7 @@ static void cpu_exec_nocache(CPUState *cpu, int max_cycles,
 
     /* execute the generated code */
     trace_exec_tb_nocache(tb, tb->pc);
-    cpu_tb_exec(cpu, tb);
+    cpu_tb_exec(tb->pc, cpu, tb);
 
     tb_lock();
     tb_phys_invalidate(tb, -1);
@@ -242,7 +249,7 @@ static void cpu_exec_step(CPUState *cpu)
         cc->cpu_exec_enter(cpu);
         /* execute the generated code */
         trace_exec_tb_nocache(tb, pc);
-        cpu_tb_exec(cpu, tb);
+        cpu_tb_exec(tb->pc, cpu, tb);
         cc->cpu_exec_exit(cpu);
 
         tb_lock();
@@ -309,7 +316,7 @@ static bool tb_cmp(const void *p, const void *d)
     return false;
 }
 
-static TranslationBlock *tb_htable_lookup(CPUState *cpu,
+TranslationBlock *tb_htable_lookup(CPUState *cpu,
                                           target_ulong pc,
                                           target_ulong cs_base,
                                           uint32_t flags)
@@ -363,6 +370,7 @@ static inline TranslationBlock *tb_find(CPUState *cpu,
             if (!tb) {
                 /* if no translated code available, then translate it now */
                 tb = tb_gen_code(cpu, pc, cs_base, flags, 0);
+                AFL_QEMU_CPU_SNIPPET1;
             }
 
             mmap_unlock();
@@ -386,9 +394,14 @@ static inline TranslationBlock *tb_find(CPUState *cpu,
             tb_lock();
             have_tb_lock = true;
         }
+/*
+ * chaining complicates AFL's instrumentation so we disable it
+ */
+#ifdef NOPE_NOT_NEVER
         if (!tb->invalid) {
             tb_add_jump(last_tb, tb_exit, tb);
         }
+#endif
     }
     if (have_tb_lock) {
         tb_unlock();
@@ -573,7 +586,7 @@ static inline void cpu_loop_exec_tb(CPUState *cpu, TranslationBlock *tb,
     int32_t insns_left;
 
     trace_exec_tb(tb, tb->pc);
-    ret = cpu_tb_exec(cpu, tb);
+    ret = cpu_tb_exec(tb->pc, cpu, tb);
     tb = (TranslationBlock *)(ret & ~TB_EXIT_MASK);
     *tb_exit = ret & TB_EXIT_MASK;
     if (*tb_exit != TB_EXIT_REQUESTED) {
