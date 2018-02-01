@@ -1462,7 +1462,7 @@ static void *qemu_tcg_cpu_thread_fn(void *arg)
     /* process any pending work */
     cpu->exit_request = 1;
 
-    while (1) {
+    while (!afl_wants_cpu_to_stop) {
         if (cpu_can_run(cpu)) {
             int r;
             r = tcg_cpu_exec(cpu);
@@ -1512,6 +1512,12 @@ static void *qemu_tcg_cpu_thread_fn(void *arg)
         cpu_disable_ticks();
 
         /* let iothread through once ... */
+
+        qemu_mutex_unlock_iothread();
+        cpu_exec_step_atomic(cpu);
+        qemu_mutex_lock_iothread();
+
+        atomic_mb_set(&cpu->exit_request, 0);
         qemu_tcg_wait_io_event(cpu);
         sleep(1);
     }
