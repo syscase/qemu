@@ -190,7 +190,7 @@ static inline tcg_target_ulong cpu_tb_exec(target_ulong pc, CPUState *cpu, Trans
         }
     } else {
         /* we executed it, trace it */
-        AFL_QEMU_CPU_SNIPPET2(env, pc);
+        AFL_QEMU_CPU_SNIPPET2(cpu, pc);
     }
     if(afl_wants_cpu_to_stop)
         cpu->exit_request = 1;
