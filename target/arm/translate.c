@@ -12371,8 +12371,8 @@ void helper_aflInterceptLog(CPUArchState *env)
     if(!fp)
         return;
 
-    target_ulong stack = env->regs[R_ESP];
-    //target_ulong level = env->regs[R_ESI]; // arg 2
+    target_ulong stack = env->regs[REG_RSP];
+    //target_ulong level = env->regs[REG_RSI]; // arg 2
     target_ulong ptext = cpu_ldq_data(env, stack + 0x8); // arg7
     target_ulong len   = cpu_ldq_data(env, stack + 0x10) & 0xffff; // arg8
     const char *msg = peekStrZ(env, ptext, len);
