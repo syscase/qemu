@@ -137,6 +137,98 @@ static void init_delay_params(SyncClocks *sc, const CPUState *cpu)
 }
 #endif /* CONFIG USER ONLY */
 
+static void afl_log_printf(const char *label, CPUArchState *env, target_ulong pc)
+{
+    int level = arm_current_el(env);
+    bool secure = arm_is_secure(env);
+    const char* secure_msg = secure ? "secure" : "normal";
+    fprintf(stdout, "pc %p (%s, EL%i, %s)\n", (void*) pc, label, level,
+            secure_msg);
+}
+
+static bool afl_log_area(target_ulong start, target_ulong size, const char *label,
+        CPUArchState *env, target_ulong pc)
+{
+    target_ulong end = start + size - 1;
+    if(pc >= start && pc <= end) {
+        afl_log_printf(label, env, pc);
+        return true;
+    }
+    return false;
+}
+
+static void afl_log_pc(CPUArchState *env, target_ulong pc)
+{
+
+    //if(afl_log_area(0x42000000, 0x00200000, "CFG_SHMEM", env, pc))
+    //    return;
+
+    //if(afl_log_area(0x0e400000, 0x00c00000, "CFG_TA_RAM", env, pc))
+    //    return;
+
+    //if(afl_log_area(0x0e144000, 0x001bc000, "VCORE_UNPG_RW_PA", env, pc))
+    //    return;
+
+    if(afl_log_area(0x0, 0xdffffff, "BL1_RO", env, pc))
+        return;
+
+    if(afl_log_area(0xe036000, 0x8001, "BL1_RW", env, pc))
+        return;
+
+    if(afl_log_area(0xe003000, 0x6419, "BL2", env, pc))
+        return;
+
+    if(afl_log_area(0xe020000, 0x6079, "BL31", env, pc))
+        return;
+
+    if(afl_log_area(0x60000000, 0x200001, "BL33", env, pc))
+        return;
+
+    if(afl_log_area(0x0e000000, 0x00100000, "ARM-TF runtime service", env, pc))
+        return;
+
+    if(afl_log_area(0x0e100000, 0x00044000, "VCORE_UNPG_RX_PA", env, pc))
+        return;
+
+    if(afl_log_area(0x20000000, 0x4620000, "EFI services", env, pc))
+        return;
+
+    if(afl_log_area(0x40000000, 0x3fe00000, "DRAM0", env, pc))
+        return;
+
+    if(afl_log_area(0x40000000, 0x22fffff, "Linux DMA", env, pc))
+        return;
+
+    if(afl_log_area(0xffff00000000, 0xfffe000100000000, "Linux User", env, pc))
+        return;
+
+    if(afl_log_area(0xffff000000000000, 0x1000000000000, "Linux Kernel", env, pc))
+        return;
+
+    afl_log_printf("UNKNOWN", env, pc);
+
+    //target_ulong shmem_offset_start= 0x42000000;
+    //target_ulong shmem_size=0x00200000;
+
+    //target_ulong taram_offset_start= 0x0e400000;
+    //target_ulong taram_size=0x00c00000;
+
+    //target_ulong parw_offset_start= 0x0e144000;
+    //target_ulong parw_size=0x001bc000;
+
+    //target_ulong armtf_offset_start= 0x0e000000;
+    //target_ulong armtf_size=0x00100000;
+
+    //target_ulong parx_offset_start= 0x0e100000;//0xC5B8;
+    //target_ulong parx_size=0x00044000;//0xC5B8;
+
+    //target_ulong dram0_offset_start = 0x40000000;
+    //target_ulong dram0_size = 0x3fe00000; //0x40000000 - shmem_size
+
+    //target_ulong boot_offset_start = 0x0;
+    //target_ulong boot_size = 0x8000;//0x0e000000;
+}
+
 /* Execute a TB, and fix up the CPU state afterwards if necessary */
 static inline tcg_target_ulong cpu_tb_exec(target_ulong pc, CPUState *cpu, TranslationBlock *itb)
 {
