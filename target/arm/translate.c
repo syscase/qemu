@@ -12253,19 +12253,23 @@ void restore_state_to_opc(CPUARMState *env, TranslationBlock *tb,
 
 static target_ulong startForkserver(CPUArchState *env, target_ulong enableTicks)
 {
-    //printf("pid %d: startForkServer\n", getpid()); fflush(stdout);
+    printf("pid %d: startForkServer\n", getpid()); fflush(stdout);
     if(afl_fork_child) {
         /*
          * we've already started a fork server. perhaps a test case
          * accidentally triggered startForkserver again.  Exit the
          * test case without error.
          */
+        fprintf(stdout, "We've already started a fork server! Exit test case without error.\n");
         exit(0);
     }
 #ifdef CONFIG_USER_ONLY
     /* we're running in the main thread, get right to it! */
+    fprintf(stdout, "Running in main thread -> afl_setup()\n");
     afl_setup();
+    fprintf(stdout, "Running in main thread -> afl_forkserver()\n");
     afl_forkserver(env);
+    fprintf(stdout, "Running in main thread -> afl_forkserver() finished\n");
 #else
     /*
      * we're running in a cpu thread. we'll exit the cpu thread
@@ -12274,6 +12278,7 @@ static target_ulong startForkserver(CPUArchState *env, target_ulong enableTicks)
      * execution.
      * N.B. We assume a single cpu here!
      */
+    fprintf(stdout, "Want CPU to stop! Enable %p ticks.\n", (void*) enableTicks);
     aflEnableTicks = enableTicks;
     afl_wants_cpu_to_stop = 1;
 #endif
@@ -12287,7 +12292,7 @@ static target_ulong getWork(CPUArchState *env, target_ulong ptr, target_ulong sz
     FILE *fp;
     unsigned char ch;
 
-    //printf("pid %d: getWork %lx %lx\n", getpid(), ptr, sz);fflush(stdout);
+    printf("pid %d: getWork %lx %lx\n", getpid(), ptr, sz);fflush(stdout);
     assert(aflStart == 0);
     fp = fopen(aflFile, "rb");
     if(!fp) {
@@ -12310,10 +12315,10 @@ static target_ulong startWork(CPUArchState *env, target_ulong ptr)
 {
     target_ulong start, end;
 
-    //printf("pid %d: ptr %lx\n", getpid(), ptr);fflush(stdout);
+    printf("pid %d: ptr %lx\n", getpid(), ptr);fflush(stdout);
     start = cpu_ldq_data(env, ptr);
     end = cpu_ldq_data(env, ptr + 8);
-    //printf("pid %d: startWork %lx - %lx\n", getpid(), start, end);fflush(stdout);
+    printf("pid %d: startWork %lx - %lx\n", getpid(), start, end);fflush(stdout);
 
     afl_start_code = start;
     afl_end_code   = end;
@@ -12343,6 +12348,8 @@ uint32_t helper_aflCall32(CPUArchState *env, uint32_t code, uint32_t a0, uint32_
 }
 
 target_ulong helper_aflCall(CPUArchState *env, target_ulong code, target_ulong a0, target_ulong a1) {
+    fprintf(stdout, "aflCall %p, %p, %p\n", (void*) code, (void*) a0, (void*) a1);
+
     switch(code) {
     case 1: return (uint32_t)startForkserver(env, a0);
     case 2: return (uint32_t)getWork(env, a0, a1);

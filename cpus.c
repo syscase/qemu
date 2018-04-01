@@ -1502,10 +1502,12 @@ static void *qemu_tcg_cpu_thread_fn(void *arg)
 
     if(afl_wants_cpu_to_stop) {
         /* tell iothread to run AFL forkserver */
+        fprintf(stdout, "Tell iothread to run AFL forkserver\n");
         afl_wants_cpu_to_stop = 0;
         if(write(afl_qemuloop_pipe[1], "FORK", 4) != 4)
             perror("write afl_qemuloop_pip");
         afl_qemuloop_pipe[1] = -1;
+        fprintf(stdout, "Tell iothread to run AFL forkserver [finished]\n");
 
         restart_cpu = first_cpu;
         first_cpu = NULL;
@@ -1777,6 +1779,8 @@ gotPipeNotification(void *ctx)
     CPUState *env;
     char buf[4];
 
+    printf("Read afl_qemuloop_pipe\n");
+
     /* cpu thread asked us to run AFL forkserver */
     if(read(afl_qemuloop_pipe[0], buf, 4) != 4) {
         printf("error reading afl/qemu pipe!\n");
@@ -1804,6 +1808,7 @@ void qemu_init_vcpu(CPUState *cpu)
         perror("qemuloop pipe");
         exit(1);
     }
+    printf("init vcpu and pipe notification!\n");
     qemu_set_fd_handler(afl_qemuloop_pipe[0], gotPipeNotification, NULL, NULL);
 
     cpu->nr_cores = smp_cores;
