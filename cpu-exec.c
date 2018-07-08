@@ -229,6 +229,23 @@ static void afl_log_pc(CPUArchState *env, target_ulong pc)
     //target_ulong boot_size = 0x8000;//0x0e000000;
 }
 
+#include "afl.h"
+
+static void afl_coverage_log(target_ulong pc)
+{
+    FILE *fp;
+    // Only log traced address range
+    if(pc < afl_start_code || pc > afl_end_code) {
+        return;
+    }
+    fp = fopen(aflCoverageFile, "a");
+    if(!fp) {
+      perror(aflCoverageFile);
+      return;
+    }
+    fprintf(fp, "%p\n", (void*) pc);
+}
+
 /* Execute a TB, and fix up the CPU state afterwards if necessary */
 static inline tcg_target_ulong cpu_tb_exec(target_ulong pc, CPUState *cpu, TranslationBlock *itb)
 {
@@ -281,6 +298,8 @@ static inline tcg_target_ulong cpu_tb_exec(target_ulong pc, CPUState *cpu, Trans
             cc->set_pc(cpu, last_tb->pc);
         }
     } else {
+        // Log pc for coverage
+        afl_coverage_log(pc);
         /* we executed it, trace it */
         AFL_QEMU_CPU_SNIPPET2(cpu, pc);
     }

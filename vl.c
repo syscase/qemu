@@ -136,6 +136,7 @@ int main(int argc, char **argv)
 #define MAX_SCLP_CONSOLES 1
 
 extern const char *aflFile;
+extern const char *aflCoverageFile;
 extern unsigned long aflPanicAddr;
 extern unsigned long aflDmesgAddr;
 
@@ -3304,6 +3305,14 @@ int main(int argc, char **argv, char **envp)
                 break;
             case QEMU_OPTION_aflFile:
                 aflFile = (char *)optarg;
+                size_t sz;
+                sz = snprintf(NULL, 0, "%s.coverage", aflFile);
+                aflCoverageFile = (char *) malloc(sz + 1);
+                if(aflCoverageFile == NULL) {
+                  error_report("Failed while allocating buffer for alfCoverageFile");
+                  exit(1);
+                }
+                snprintf(aflCoverageFile, sz + 1, "%s.coverage", aflFile);
                 break;
             case QEMU_OPTION_aflPanicAddr:
                 aflPanicAddr = strtoul(optarg, NULL, 16);

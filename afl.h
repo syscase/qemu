@@ -1,5 +1,6 @@
 
 extern const char *aflFile;
+extern const char *aflCoverageFile;
 extern unsigned long aflPanicAddr;
 extern unsigned long aflDmesgAddr;
 
