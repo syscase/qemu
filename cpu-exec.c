@@ -235,8 +235,8 @@ static void afl_coverage_log(CPUArchState *env, target_ulong pc)
 {
     bool secure = arm_is_secure(env);
 
-    if(!aflStart && !secure) {
-      // Assume boot, only log secure world to reduce log size
+    if(!(pc >= afl_start_code && pc <= afl_end_code) && !secure) {
+      // Only log secure world and traced address space to reduce log size
       return;
     }
 
