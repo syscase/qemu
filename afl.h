@@ -1,3 +1,5 @@
+#ifndef AFL_H
+#define AFL_H
 
 extern const char *aflFile;
 extern const char *aflCoverageFile;
@@ -13,3 +15,5 @@ extern int afl_wants_cpu_to_stop;
 
 void afl_setup(void);
 void afl_forkserver(CPUState*);
+
+#endif /* AFL_H */
