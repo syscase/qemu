@@ -231,19 +231,19 @@ static void afl_log_pc(CPUArchState *env, target_ulong pc)
 
 #include "afl.h"
 
-static void afl_coverage_log(target_ulong pc)
+static void afl_coverage_log(CPUArchState *env, target_ulong pc)
 {
     FILE *fp;
-    // Only log traced address range
-    if(pc < afl_start_code || pc > afl_end_code) {
-        return;
-    }
+    // Log everything to not lose any data
     fp = fopen(aflCoverageFile, "a");
     if(!fp) {
       perror(aflCoverageFile);
       return;
     }
-    fprintf(fp, "%p\n", (void*) pc);
+    int level = arm_current_el(env);
+    bool secure = arm_is_secure(env);
+    fprintf(fp, "%p,%p,%p,%d,%d\n", (void*) afl_start_code, (void*) afl_end_code, (void*) pc, level, secure);
+    fclose(fp);
 }
 
 /* Execute a TB, and fix up the CPU state afterwards if necessary */
@@ -299,7 +299,7 @@ static inline tcg_target_ulong cpu_tb_exec(target_ulong pc, CPUState *cpu, Trans
         }
     } else {
         // Log pc for coverage
-        afl_coverage_log(pc);
+        afl_coverage_log(env, pc);
         /* we executed it, trace it */
         AFL_QEMU_CPU_SNIPPET2(cpu, pc);
     }
