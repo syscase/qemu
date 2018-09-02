@@ -233,6 +233,13 @@ static void afl_log_pc(CPUArchState *env, target_ulong pc)
 
 static void afl_coverage_log(CPUArchState *env, target_ulong pc)
 {
+    bool secure = arm_is_secure(env);
+
+    if(!aflStart && !secure) {
+      // Assume boot, only log secure world to reduce log size
+      return;
+    }
+
     FILE *fp;
     // Log everything to not lose any data
     fp = fopen(aflCoverageFile, "a");
@@ -240,8 +247,8 @@ static void afl_coverage_log(CPUArchState *env, target_ulong pc)
       perror(aflCoverageFile);
       return;
     }
+    
     int level = arm_current_el(env);
-    bool secure = arm_is_secure(env);
     fprintf(fp, "%p,%p,%p,%d,%d\n", (void*) afl_start_code, (void*) afl_end_code, (void*) pc, level, secure);
     fclose(fp);
 }
