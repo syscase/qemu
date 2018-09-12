@@ -81,6 +81,9 @@ const char *aflCoverageFile = "/tmp/work.coverage";
 unsigned long aflCoverageAddrStart = (unsigned long)-1;
 unsigned long aflCoverageAddrEnd = (unsigned long)-1;
 unsigned long aflPanicAddr = (unsigned long)-1;
+unsigned long aflPanicAddr2 = (unsigned long)-1;
+unsigned long aflPanicAddr3 = (unsigned long)-1;
+unsigned long aflPanicAddr4 = (unsigned long)-1;
 unsigned long aflDmesgAddr = (unsigned long)-1;
 
 /* Set in the child process in forkserver mode: */

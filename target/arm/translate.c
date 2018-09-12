@@ -12396,7 +12396,7 @@ void helper_aflInterceptPanic(void)
 
 void gen_aflBBlock(target_ulong pc)
 {
-    if(pc == aflPanicAddr)
+    if(pc == aflPanicAddr || pc == aflPanicAddr2 || pc == aflPanicAddr3 || pc == aflPanicAddr4)
         gen_helper_aflInterceptPanic();
     //if(pc == aflDmesgAddr)
     //    gen_helper_aflInterceptLog(cpu_env);

@@ -6,6 +6,9 @@ extern const char *aflCoverageFile;
 extern unsigned long aflCoverageAddrStart;
 extern unsigned long aflCoverageAddrEnd;
 extern unsigned long aflPanicAddr;
+extern unsigned long aflPanicAddr2;
+extern unsigned long aflPanicAddr3;
+extern unsigned long aflPanicAddr4;
 extern unsigned long aflDmesgAddr;
 
 extern int aflEnableTicks;

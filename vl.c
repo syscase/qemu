@@ -140,6 +140,9 @@ extern const char *aflCoverageFile;
 extern unsigned long aflCoverageAddrStart;
 extern unsigned long aflCoverageAddrEnd;
 extern unsigned long aflPanicAddr;
+extern unsigned long aflPanicAddr2;
+extern unsigned long aflPanicAddr3;
+extern unsigned long aflPanicAddr4;
 extern unsigned long aflDmesgAddr;
 
 static const char *data_dir[16];
@@ -3324,6 +3327,15 @@ int main(int argc, char **argv, char **envp)
                 break;
             case QEMU_OPTION_aflPanicAddr:
                 aflPanicAddr = strtoul(optarg, NULL, 16);
+                break;
+            case QEMU_OPTION_aflPanicAddr2:
+                aflPanicAddr2 = strtoul(optarg, NULL, 16);
+                break;
+            case QEMU_OPTION_aflPanicAddr3:
+                aflPanicAddr3 = strtoul(optarg, NULL, 16);
+                break;
+            case QEMU_OPTION_aflPanicAddr4:
+                aflPanicAddr4 = strtoul(optarg, NULL, 16);
                 break;
             case QEMU_OPTION_aflDmesgAddr:
                 aflDmesgAddr = strtoul(optarg, NULL, 16);

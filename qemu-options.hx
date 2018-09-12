@@ -3089,6 +3089,12 @@ DEF("aflCoverageAddrEnd", HAS_ARG, QEMU_OPTION_aflCoverageAddrEnd, \
     "-aflCoverageAddrEnd hexaddr  End address for coverage logging\n", QEMU_ARCH_ALL)
 DEF("aflPanicAddr", HAS_ARG, QEMU_OPTION_aflPanicAddr, \
     "-aflPanicAddr hexaddr  Address of OS panic function\n", QEMU_ARCH_ALL)
+DEF("aflPanicAddr2", HAS_ARG, QEMU_OPTION_aflPanicAddr2, \
+    "-aflPanicAddr2 hexaddr  Address of OS panic function\n", QEMU_ARCH_ALL)
+DEF("aflPanicAddr3", HAS_ARG, QEMU_OPTION_aflPanicAddr3, \
+    "-aflPanicAddr3 hexaddr  Address of OS panic function\n", QEMU_ARCH_ALL)
+DEF("aflPanicAddr4", HAS_ARG, QEMU_OPTION_aflPanicAddr4, \
+    "-aflPanicAddr4 hexaddr  Address of OS panic function\n", QEMU_ARCH_ALL)
 DEF("aflDmesgAddr", HAS_ARG, QEMU_OPTION_aflDmesgAddr, \
     "-aflDmesgAddr hexaddr  Address of OS logging function\n", QEMU_ARCH_ALL)
 
