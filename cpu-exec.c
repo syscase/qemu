@@ -233,12 +233,11 @@ static void afl_log_pc(CPUArchState *env, target_ulong pc)
 
 static void afl_coverage_log(CPUArchState *env, target_ulong pc)
 {
-    bool secure = arm_is_secure(env);
-
-    if(!(pc >= afl_start_code && pc <= afl_end_code) && !secure) {
-      // Only log secure world and traced address space to reduce log size
-      return;
+    if(pc < aflCoverageAddrStart || pc > aflCoverageAddrEnd) {
+        return;
     }
+
+    bool secure = arm_is_secure(env);
 
     FILE *fp;
     // Log everything to not lose any data

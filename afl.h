@@ -3,6 +3,8 @@
 
 extern const char *aflFile;
 extern const char *aflCoverageFile;
+extern unsigned long aflCoverageAddrStart;
+extern unsigned long aflCoverageAddrEnd;
 extern unsigned long aflPanicAddr;
 extern unsigned long aflDmesgAddr;
 

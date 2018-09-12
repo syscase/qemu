@@ -137,6 +137,8 @@ int main(int argc, char **argv)
 
 extern const char *aflFile;
 extern const char *aflCoverageFile;
+extern unsigned long aflCoverageAddrStart;
+extern unsigned long aflCoverageAddrEnd;
 extern unsigned long aflPanicAddr;
 extern unsigned long aflDmesgAddr;
 
@@ -3313,6 +3315,12 @@ int main(int argc, char **argv, char **envp)
                   exit(1);
                 }
                 snprintf(aflCoverageFile, sz + 1, "%s.coverage", aflFile);
+                break;
+            case QEMU_OPTION_aflCoverageAddrStart:
+                aflCoverageAddrStart = strtoul(optarg, NULL, 16);
+                break;
+            case QEMU_OPTION_aflCoverageAddrEnd:
+                aflCoverageAddrEnd = strtoul(optarg, NULL, 16);
                 break;
             case QEMU_OPTION_aflPanicAddr:
                 aflPanicAddr = strtoul(optarg, NULL, 16);
