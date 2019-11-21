@@ -12324,6 +12324,7 @@ static target_ulong startWork(CPUArchState *env, target_ulong ptr)
     afl_end_code   = end;
     aflGotLog = 0;
     aflStart = 1;
+    printf("startWork finished\n");fflush(stdout);
     return 0;
 }
 
@@ -12343,19 +12344,66 @@ static target_ulong doneWork(target_ulong val)
     exit(val); /* exit forkserver child */
 }
 
+static target_ulong logFile(CPUArchState *env, target_ulong ptr, target_ulong sz)
+{
+    target_ulong retsz;
+    int fd;
+    FILE *fp;
+    unsigned char ch;
+    char *file;
+    size_t name_sz;
+    name_sz = snprintf(NULL, 0, "%s.XXXXXX", aflLogFile);
+    file = (char *) malloc(name_sz + 1);
+    if(file == NULL) {
+      fprintf(stderr, "Failed while allocating buffer for log file name");
+      exit(1);
+    }
+    snprintf(file, name_sz + 1, "%s.XXXXXX", aflLogFile);
+
+    fd = mkstemp(file);
+    if(fd == -1) {
+         perror(file);
+         return -1;
+    }
+
+    fp = fdopen(fd, "a");
+    if(!fp) {
+         perror(file);
+         return -1;
+    }
+
+    retsz = 0;
+    while(retsz < sz) {
+        // Default for char on ARM should be unsigned
+        ch = cpu_ldub_data(env, ptr);
+        if(fwrite(&ch, 1, 1, fp) == 0)
+            break;
+        retsz ++;
+        ptr ++;
+    }
+    fclose(fp);
+    return retsz;
+}
+
 uint32_t helper_aflCall32(CPUArchState *env, uint32_t code, uint32_t a0, uint32_t a1) {
     return (uint32_t)helper_aflCall(env, code, a0, a1);
 }
 
 target_ulong helper_aflCall(CPUArchState *env, target_ulong code, target_ulong a0, target_ulong a1) {
     fprintf(stdout, "aflCall %p, %p, %p\n", (void*) code, (void*) a0, (void*) a1);
+    fprintf(stdout, "aflCall %p, %p, %p\n", (void*) code, (void*) a0, (void*) a1);
 
     switch(code) {
-    case 1: return (uint32_t)startForkserver(env, a0);
+    case 1: 
+        fprintf(stdout, "call startForkserver\n");
+        return (uint32_t)startForkserver(env, a0);
     case 2: return (uint32_t)getWork(env, a0, a1);
     case 3: return (uint32_t)startWork(env, a0);
     case 4: return (uint32_t)doneWork(a0);
-    default: return -1;
+    case 5: return (uint32_t)logFile(env, a0, a1);
+    default:
+        fprintf(stderr, "Unknown AFL call id\n");
+        return -1;
     }
 }
 
@@ -12394,8 +12442,81 @@ void helper_aflInterceptPanic(void)
     exit(32);
 }
 
+static void afl_log_pc(target_ulong pc)
+{
+    target_ulong shmem_offset_start= 0x42000000;
+    target_ulong shmem_size=0x00200000;
+    target_ulong shmem_offset_end = shmem_offset_start + shmem_size;
+    if(pc >= shmem_offset_start && pc <=shmem_offset_end) {
+        fprintf(stdout, "aflBBlock pc %p (CFG_SHMEM)\n", (void*) pc);
+        return;
+    }
+    
+    target_ulong taram_offset_start= 0x0e400000;
+    target_ulong taram_size=0x00c00000;
+    target_ulong taram_offset_end = taram_offset_start + taram_size;
+    if(pc >= taram_offset_start && pc <=taram_offset_end) {
+        fprintf(stdout, "aflBBlock pc %p (CFG_TA_RAM)\n", (void*) pc);
+        return;
+    }
+    
+    target_ulong parw_offset_start= 0x0e144000;
+    target_ulong parw_size=0x001bc000;
+    target_ulong parw_offset_end = parw_offset_start + parw_size;
+    if(pc >= parw_offset_start && pc <=parw_offset_end) {
+        fprintf(stdout, "aflBBlock pc %p (VCORE_UNPG_RW_PA)\n", (void*) pc);
+        return;
+    }
+    
+    target_ulong armtf_offset_start= 0x0e000000;
+    target_ulong armtf_size=0x00100000;
+    target_ulong armtf_offset_end = armtf_offset_start + armtf_size;
+    if(pc >= armtf_offset_start && pc <=armtf_offset_end) {
+        fprintf(stdout, "aflBBlock pc %p (ARM-TF runtime service)\n", (void*) pc);
+        return;
+    }
+
+    target_ulong parx_offset_start= 0x0e100000;//0xC5B8;
+    target_ulong parx_size=0x00044000;//0xC5B8;
+    target_ulong parx_offset_end = parx_offset_start + parx_size;
+    if(pc >= parx_offset_start && pc <=parx_offset_end) {
+        fprintf(stdout, "aflBBlock pc %p (VCORE_UNPG_RX_PA)\n", (void*) pc);
+        return;
+    }
+
+    target_ulong dram0_offset_start = 0x40000000;
+    target_ulong dram0_size = 0x40000000 - shmem_size; //?
+    target_ulong dram0_offset_end = dram0_offset_start + dram0_size;
+    if(pc >= dram0_offset_start && pc <=dram0_offset_end) {
+        fprintf(stdout, "aflBBlock pc %p (DRAM0)\n", (void*) pc);
+        return;
+    }
+
+    target_ulong boot_offset_start = 0x0;
+    target_ulong boot_size = 0x8000;//0x0e000000;
+    target_ulong boot_offset_end = boot_offset_start + boot_size;
+    if(pc >= boot_offset_start && pc < boot_offset_end) {
+        fprintf(stdout, "aflBBlock pc %p (Bootloader)\n", (void*) pc);
+        return;
+    }
+
+    if(pc >= 0xffff00000000 && pc < 0xffff000000000000) {
+        // Linux user
+        //fprintf(stdout, "aflBBlock pc %p (Linux User)\n", (void*) pc);
+        return;
+    }
+    if(pc >= 0xffff000000000000) {
+        // Linux kernel
+        //fprintf(stdout, "aflBBlock pc %p (Linux Kernel)\n", (void*) pc);
+        return;
+    }
+
+    fprintf(stdout, "aflBBlock pc %p (unknown)\n", (void*) pc);
+}
+
 void gen_aflBBlock(target_ulong pc)
 {
+    //afl_log_pc(pc); 
     if(pc == aflPanicAddr || pc == aflPanicAddr2 || pc == aflPanicAddr3 || pc == aflPanicAddr4)
         gen_helper_aflInterceptPanic();
     //if(pc == aflDmesgAddr)

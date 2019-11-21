@@ -136,6 +136,7 @@ int main(int argc, char **argv)
 #define MAX_SCLP_CONSOLES 1
 
 extern const char *aflFile;
+extern const char *aflLogFile;
 extern const char *aflCoverageFile;
 extern unsigned long aflCoverageAddrStart;
 extern unsigned long aflCoverageAddrEnd;
@@ -3318,6 +3319,9 @@ int main(int argc, char **argv, char **envp)
                   exit(1);
                 }
                 snprintf(aflCoverageFile, sz + 1, "%s.coverage", aflFile);
+                break;
+            case QEMU_OPTION_aflLogFile:
+                aflLogFile = (char *)optarg;
                 break;
             case QEMU_OPTION_aflCoverageAddrStart:
                 aflCoverageAddrStart = strtoul(optarg, NULL, 16);

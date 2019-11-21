@@ -78,6 +78,7 @@ int aflGotLog = 0;              /* we've seen dmesg logging */
 /* from command line options */
 const char *aflFile = "/tmp/work";
 const char *aflCoverageFile = "/tmp/work.coverage";
+const char *aflLogFile = "/tmp/work.log";
 unsigned long aflCoverageAddrStart = (unsigned long)-1;
 unsigned long aflCoverageAddrEnd = (unsigned long)-1;
 unsigned long aflPanicAddr = (unsigned long)-1;

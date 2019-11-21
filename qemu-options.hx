@@ -3083,6 +3083,8 @@ ETEXI
 
 DEF("aflFile", HAS_ARG, QEMU_OPTION_aflFile, \
     "-aflFile fname  AFL input sourced from fname\n", QEMU_ARCH_ALL)
+DEF("aflLogFile", HAS_ARG, QEMU_OPTION_aflLogFile, \
+    "-aflLogFile fname  AFL input sourced from fname\n", QEMU_ARCH_ALL)
 DEF("aflCoverageAddrStart", HAS_ARG, QEMU_OPTION_aflCoverageAddrStart, \
     "-aflCoverageAddrStart hexaddr  Start address for coverage logging\n", QEMU_ARCH_ALL)
 DEF("aflCoverageAddrEnd", HAS_ARG, QEMU_OPTION_aflCoverageAddrEnd, \

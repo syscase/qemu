@@ -2,6 +2,7 @@
 #define AFL_H
 
 extern const char *aflFile;
+extern const char *aflLogFile;
 extern const char *aflCoverageFile;
 extern unsigned long aflCoverageAddrStart;
 extern unsigned long aflCoverageAddrEnd;
