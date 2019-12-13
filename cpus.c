@@ -1506,7 +1506,11 @@ static void *qemu_tcg_cpu_thread_fn(void *arg)
         afl_wants_cpu_to_stop = 0;
         if(write(afl_qemuloop_pipe[1], "FORK", 4) != 4)
             perror("write afl_qemuloop_pip");
+        aio_notify(qemu_get_aio_context());
+        aio_poll(qemu_get_aio_context(), true);
         afl_qemuloop_pipe[1] = -1;
+        aio_notify(qemu_get_aio_context());
+        aio_poll(qemu_get_aio_context(), true);
         fprintf(stdout, "Tell iothread to run AFL forkserver [finished]\n");
 
         restart_cpu = first_cpu;
